@@ -1,0 +1,147 @@
+    <!-- Name: Nunez, Priscilla
+         Class: SI 339
+         Date: 3.27.19
+         Assignment: JavaScript Canvas
+         Instructor: Dr. CVL 
+         GSI: Lee, Sanghyun -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>JavaScript-Canvas Example</title>
+	<style type="text/css">
+		canvas{
+            border: 1px solid black;          
+        }
+        #picker {
+            height: 50px;
+            width: 200px
+        }
+    </style>
+</head>
+<body>
+    <div>
+    <h3>Color picker</h3>
+    <input type="color" id="picker" name="picker"
+        value="#ff0000">
+    </div>
+	<canvas id="circlecanvas"></canvas> 
+<script>
+var canvas = document.getElementById("circlecanvas");
+// The position will naturally want to start from the bottom left corner of the page so I needed to offset the position of the marker and set the starter position.
+canvas.width = document.documentElement.clientWidth * 0.8;
+canvas.height = document.documentElement.clientHeight * 0.8;
+// when the page loads we defined the color of marker and positions 
+var picker = document.getElementById("picker")
+var ctx = canvas.getContext("2d");
+// setting X and y as starter positions
+var x = 0;
+var y = 0;
+var color = "red";
+var radius = 5;
+var ongoingTouches = [];
+
+
+// The draw function is responsibe for painting the page. 
+function draw(){
+    ctx.beginPath();
+    ctx.moveTo(x,y)
+    ctx.fillStyle = color;
+    ctx.arc(x,y,radius,0,2*Math.PI);
+    ctx.fill();
+}
+// The clear functions clears the drawing when I click on space. 
+function clear(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        x = 0;
+        y = 0;
+        color = "#ff0000";
+        radius = 5;
+}
+// This is a reusable function when touch the page - different from mouse. This determines the position from last touch to the next touch. 
+function ongoingTouchIndexById(idToFind) {
+    // Added extra function to jump from one touch to another touch.
+    for (var i = 0; i < ongoingTouches.length; i++) {
+      var id = ongoingTouches[i].identifier;
+      
+      if (id == idToFind) {
+        return i;
+      }
+    }
+    return -1;    // not found
+}
+
+function copyTouch(touch) {
+    return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY };
+}
+
+picker.style.backgroundColor =color
+// Added a listener for the color picker. 
+picker.addEventListener('change', function(e){
+    color = e.target.value;
+    picker.style.backgroundColor =color
+})
+// This listens to the mouse movement. 
+canvas.addEventListener('mousemove', function (e) {
+    //Offset gets the actual position of the mouse related to the canvas box.
+    //There is margin at the top and on the bottom of the webpage so I need to know the position. I can tell the placements around the Canvas box.
+	x= e.pageX - ctx.canvas.offsetLeft
+    y= e.pageY - ctx.canvas.offsetTop
+    draw()
+})
+// This listens to the movement of the touch. 
+canvas.addEventListener('touchmove', function (e) {
+    var touches = e.changedTouches;
+    // This increments the loop i++ (I know we can use a while loop but this is neater.) Ends at length of the touch area.
+    for (var i = 0; i < touches.length; i++) {
+        console.log(touches)
+        var idx = ongoingTouchIndexById(touches[i].identifier);
+        if (idx >= 0) {
+            x = ongoingTouches[idx].pageX - ctx.canvas.offsetLeft;
+            y = ongoingTouches[idx].pageY  - ctx.canvas.offsetTop     
+            draw()
+            ongoingTouches.splice(idx, 1, copyTouch(touches[i]));  // When I touch one point and move to another point the touch is recorded. This helps me recognize how the movement continues. 
+        }
+    }
+ })
+    //This listens to the beginning of the touch and listens for how long.
+ canvas.addEventListener('touchstart', function (e) {
+    var touches = e.changedTouches;
+    for (var i = 0; i < touches.length; i++) {
+        ongoingTouches.push(copyTouch(touches[i]));
+      }
+ })
+    // Used the === to compare. Initially had a hard time because the == would be used to pass a number 2 to a string. If I use === it tells me the 2 is a number and passing it as a string.
+window.addEventListener('keypress',function (e) {
+	if (e.key === "b" ) {
+        color = "blue"
+    }else if(e.key === "g"){
+        color = "green"
+    }
+    else if(e.key === "r"){
+        color = "red"
+    } 
+    else if(e.key === "y"){
+        color = "yellow"
+    }
+    else if(e.code === "Space"){
+        clear()
+    }
+})
+    // Listens to the keypord arrow press and allows you to continue pressing.
+window.addEventListener('keydown',function (e) {
+	if (e.key === "ArrowUp" ) {
+        radius++ // radius increases - ArrowUp makes it larger
+    }else if(e.key === "ArrowDown"){
+        radius = radius-1 > 0? radius-1: 1 // radius is decreased - ArrowDown makes it smaller
+    }
+})
+
+window.addEventListener("orientationchange", function() {
+    clear() // another time to call the clear method
+});
+
+</script>
+</body>
+</html>
